@@ -2,6 +2,9 @@
 #include <GLFW/glfw3.h>
 #include <shader.h>
 #include <stb_image.h>
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
 
 #include <iostream>
 
@@ -132,7 +135,7 @@ int main(void){
     shader.use();
     shader.setInt("texture1", 0);
     shader.setInt("texture2", 1);
-    
+
 
     // Render loop
     // input -> update -> render -> swap buffers & poll events
@@ -152,6 +155,21 @@ int main(void){
         glBindTexture(GL_TEXTURE_2D, texture2);
 
         glBindVertexArray(VAO);
+
+        glm::mat4 trans = glm::mat4(1.0f);
+        trans = glm::rotate(trans, (float)glfwGetTime(), glm::vec3(0.0f, 0.0f, 1.0f));
+        trans = glm::translate(trans, glm::vec3(0.5f, -0.5f, 0.0f));
+        // first translate, then rotate since matrix multiplication is right to left
+        shader.setMat4("transform", glm::value_ptr(trans));
+
+        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+
+        trans = glm::mat4(1.0f);
+        trans = glm::rotate(trans, -(float)glfwGetTime(), glm::vec3(1.0f, 1.0f, 0.0f));
+        trans = glm::translate(trans, glm::vec3(0.5f, -0.5f, 0.0f));
+        // first translate, then rotate since matrix multiplication is right to left
+        shader.setMat4("transform", glm::value_ptr(trans));
+
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
         glfwSwapBuffers(window);
