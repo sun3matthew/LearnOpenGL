@@ -14,6 +14,26 @@ void processInput(GLFWwindow *window)
         glfwSetWindowShouldClose(window, true);
 }
 
+char* readShaderFile(const char* filepath)
+{
+    FILE* file = fopen(filepath, "r");
+    if (!file) {
+        fprintf(stderr, "Failed to open shader file: %s\n", filepath);
+        return NULL;
+    }
+
+    fseek(file, 0, SEEK_END);
+    long length = ftell(file);
+    fseek(file, 0, SEEK_SET);
+
+    char* content = (char*)malloc(length + 1);
+    fread(content, 1, length, file);
+    content[length] = '\0';
+
+    fclose(file);
+    return content;
+}
+
 int main(void){
     glfwInit();
     
@@ -39,18 +59,12 @@ int main(void){
     glViewport(0, 0, 1600, 1200); // for some reason its double the size of the window
 
 
-    const char *vertexShaderSource = 
-        "#version 330 core\n"
-        "layout (location = 0) in vec3 aPos;\n"
-        "void main()\n"
-        "{\n"
-        "   gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);\n"
-        "}\0";
-
+    char *vertexShaderSource = readShaderFile("resources/shaders/vertex.glsl");
     unsigned int vertexShader;
     vertexShader = glCreateShader(GL_VERTEX_SHADER);
     glShaderSource(vertexShader, 1, &vertexShaderSource, NULL);
     glCompileShader(vertexShader);
+    free(vertexShaderSource);
 
     int  success;
     char infoLog[512];
@@ -61,14 +75,7 @@ int main(void){
         std::cout << "ERROR::SHADER::VERTEX::COMPILATION_FAILED\n" << infoLog << std::endl;
     }
 
-    const char *fragmentShaderSource = 
-        "#version 330 core\n"
-        "out vec4 FragColor;\n"
-        "void main()\n"
-        "{\n"
-        "   FragColor = vec4(1.0f, 0.5f, 0.2f, 1.0f);\n"
-        "}\n\0";
-
+    char *fragmentShaderSource = readShaderFile("resources/shaders/frag.glsl");
     unsigned int fragmentShader;
     fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
     glShaderSource(fragmentShader, 1, &fragmentShaderSource, NULL);
@@ -78,19 +85,15 @@ int main(void){
         glGetShaderInfoLog(fragmentShader, 512, NULL, infoLog);
         std::cout << "ERROR::SHADER::FRAGMENT::COMPILATION_FAILED\n" << infoLog << std::endl;
     }
+    free(fragmentShaderSource);
 
 
-    const char *fragmentShaderSource2 = 
-        "#version 330 core\n"
-        "out vec4 FragColor;\n"
-        "void main()\n"
-        "{\n"
-        "   FragColor = vec4(0.0f, 0.5f, 0.2f, 1.0f);\n"
-        "}\n\0";
+    char *fragmentShaderSource2 = readShaderFile("resources/shaders/frag2.glsl");
     unsigned int fragmentShader2;
     fragmentShader2 = glCreateShader(GL_FRAGMENT_SHADER);
     glShaderSource(fragmentShader2, 1, &fragmentShaderSource2, NULL);
     glCompileShader(fragmentShader2);
+    free(fragmentShaderSource2);
 
     unsigned int shaderProgram;
     shaderProgram = glCreateProgram();

@@ -17,6 +17,8 @@ link_directories(/opt/homebrew/lib)
 # Find all source files in src/
 file(GLOB_RECURSE SRC_FILES ${CMAKE_SOURCE_DIR}/src/*.cpp ${CMAKE_SOURCE_DIR}/src/*.c)
 
+file(COPY ${CMAKE_SOURCE_DIR}/resources/ DESTINATION ${CMAKE_BINARY_DIR}/resources)
+
 # Add executable target
 add_executable(${PROJECT_NAME} ${SRC_FILES})
 
