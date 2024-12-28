@@ -1,7 +1,7 @@
-// #include <stdio.h>
-// #include <stdlib.h>
 #include <glad/glad.h> 
 #include <GLFW/glfw3.h>
+#include <shader.h>
+
 #include <iostream>
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height){
@@ -12,26 +12,6 @@ void processInput(GLFWwindow *window)
 {
     if(glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(window, true);
-}
-
-char* readShaderFile(const char* filepath)
-{
-    FILE* file = fopen(filepath, "r");
-    if (!file) {
-        fprintf(stderr, "Failed to open shader file: %s\n", filepath);
-        return NULL;
-    }
-
-    fseek(file, 0, SEEK_END);
-    long length = ftell(file);
-    fseek(file, 0, SEEK_SET);
-
-    char* content = (char*)malloc(length + 1);
-    fread(content, 1, length, file);
-    content[length] = '\0';
-
-    fclose(file);
-    return content;
 }
 
 int main(void){
@@ -58,73 +38,16 @@ int main(void){
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);  
     glViewport(0, 0, 1600, 1200); // for some reason its double the size of the window
 
-
-    char *vertexShaderSource = readShaderFile("resources/shaders/vertex.glsl");
-    unsigned int vertexShader;
-    vertexShader = glCreateShader(GL_VERTEX_SHADER);
-    glShaderSource(vertexShader, 1, &vertexShaderSource, NULL);
-    glCompileShader(vertexShader);
-    free(vertexShaderSource);
-
-    int  success;
-    char infoLog[512];
-    glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &success);
-
-    if(!success){
-        glGetShaderInfoLog(vertexShader, 512, NULL, infoLog);
-        std::cout << "ERROR::SHADER::VERTEX::COMPILATION_FAILED\n" << infoLog << std::endl;
-    }
-
-    char *fragmentShaderSource = readShaderFile("resources/shaders/frag.glsl");
-    unsigned int fragmentShader;
-    fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-    glShaderSource(fragmentShader, 1, &fragmentShaderSource, NULL);
-    glCompileShader(fragmentShader);
-    glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &success);
-    if(!success){
-        glGetShaderInfoLog(fragmentShader, 512, NULL, infoLog);
-        std::cout << "ERROR::SHADER::FRAGMENT::COMPILATION_FAILED\n" << infoLog << std::endl;
-    }
-    free(fragmentShaderSource);
-
-
-    char *fragmentShaderSource2 = readShaderFile("resources/shaders/frag2.glsl");
-    unsigned int fragmentShader2;
-    fragmentShader2 = glCreateShader(GL_FRAGMENT_SHADER);
-    glShaderSource(fragmentShader2, 1, &fragmentShaderSource2, NULL);
-    glCompileShader(fragmentShader2);
-    free(fragmentShaderSource2);
-
-    unsigned int shaderProgram;
-    shaderProgram = glCreateProgram();
-    glAttachShader(shaderProgram, vertexShader);
-    glAttachShader(shaderProgram, fragmentShader);
-    glLinkProgram(shaderProgram);
-    glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success);
-    if(!success){
-        glGetProgramInfoLog(shaderProgram, 512, NULL, infoLog);
-        std::cout << "ERROR::SHADER::PROGRAM::LINKING_FAILED\n" << infoLog << std::endl;
-    }
-    glDeleteShader(fragmentShader); 
-
-    unsigned int shaderProgram2;
-    shaderProgram2 = glCreateProgram();
-    glAttachShader(shaderProgram2, vertexShader);
-    glAttachShader(shaderProgram2, fragmentShader2);
-    glLinkProgram(shaderProgram2);
-
-    glDeleteShader(vertexShader);
-    glDeleteShader(fragmentShader2);
-
+    Shader shader("resources/shaders/vertex.glsl", "resources/shaders/frag.glsl");
 
     unsigned int VAO;
     glGenVertexArrays(1, &VAO);  
     glBindVertexArray(VAO);
 
-    float vertices[] = {
-        -0.9f, -0.5f, 0.0f,  // left 
-        -0.0f, -0.5f, 0.0f,  // right
-        -0.45f, 0.5f, 0.0f,  // top 
+    float vertices[] = {    // x, y, z, r, g, b
+        -0.9f, -0.5f, 0.0f, 1.0f, 0.0f, 0.0f,  // left
+        -0.0f, -0.5f, 0.0f, 0.0f, 1.0f, 0.0f,  // right
+        -0.45f, 0.5f, 0.0f, 0.0f, 0.0f, 1.0f   // top
     }; 
 
     unsigned int VBO;
@@ -133,8 +56,10 @@ int main(void){
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
     // index, size, type, normalized, stride, pointer to the first component
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0); 
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
+    glEnableVertexAttribArray(1);
 
     glBindVertexArray(0);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -145,9 +70,9 @@ int main(void){
     glBindVertexArray(VAO2);
 
     float vertices2[] = {
-        0.0f, -0.5f, 0.0f,  // left
-        0.9f, -0.5f, 0.0f,  // right
-        0.45f, 0.5f, 0.0f   // top 
+        0.0f, -0.5f, 0.0f, 0.0f, 1.0f, 0.0f,  // left
+        0.9f, -0.5f, 0.0f, 1.0f, 0.0f, 0.0f,  // right
+        0.45f, 0.5f, 0.0f, 0.0f, 0.0f, 1.0f   // top
     };
 
     unsigned int VBO2;
@@ -155,12 +80,16 @@ int main(void){
     glBindBuffer(GL_ARRAY_BUFFER, VBO2);
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices2), vertices2, GL_STATIC_DRAW);
 
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
+    glEnableVertexAttribArray(1);
 
     glBindVertexArray(0);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 
+
+    // int vertexColorLocation = glGetUniformLocation(shaderProgram, "ourColor");
 
 
     // Render loop
@@ -172,13 +101,16 @@ int main(void){
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
 
+        float timeValue = glfwGetTime();
+        float greenValue = (sin(timeValue) / 2.0f) + 0.5f;
 
-        // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-        glUseProgram(shaderProgram);
+        shader.use();
+
+        shader.setVec3("ourColor", 0.0f, greenValue, 0.0f);
         glBindVertexArray(VAO);
         glDrawArrays(GL_TRIANGLES, 0, 3);
 
-        glUseProgram(shaderProgram2);
+        shader.setVec3("ourColor", greenValue, 0.0f, 0.0f);
         glBindVertexArray(VAO2);
         glDrawArrays(GL_TRIANGLES, 0, 3);
 
