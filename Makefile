@@ -1,13 +1,16 @@
 # Set the build directory
 BUILD_DIR = build
 
+# Default build type (Release or Debug)
+BUILD_TYPE ?= Release
+
 # Default target to configure and build
 all: configure build
 
-# Configure the project (this will invoke CMake)
+# Configure the project (this will invoke CMake with the build type)
 configure:
 	mkdir -p $(BUILD_DIR)
-	cd $(BUILD_DIR) && cmake ..
+	cd $(BUILD_DIR) && cmake -DCMAKE_BUILD_TYPE=$(BUILD_TYPE) ..
 
 # Build the project (invokes make)
 build: configure
@@ -21,4 +24,12 @@ run: build
 clean:
 	rm -rf $(BUILD_DIR)
 
-.PHONY: all configure build run clean
+# Build a Release version
+release:
+	$(MAKE) BUILD_TYPE=Release
+
+# Build a Debug version
+debug:
+	$(MAKE) BUILD_TYPE=Debug
+
+.PHONY: all configure build run clean release debug
