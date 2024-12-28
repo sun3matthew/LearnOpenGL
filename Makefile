@@ -1,36 +1,24 @@
-# Compiler and flags
-CXX = clang++
-CXXFLAGS = -I$(shell brew --prefix)/include
-CXXFLAGS += -Iinclude
-CXXFLAGS += -std=c++17
-CXXFLAGS += -DGL_SILENCE_DEPRECATION
+# Set the build directory
+BUILD_DIR = build
 
+# Default target to configure and build
+all: configure build
 
-LDFLAGS = -L$(shell brew --prefix)/lib -lglfw -framework OpenGL
-
-# Source directory
-SRC_DIR = src
-
-# Build directory
-BUILD_DIR = builds
-
-# Target names
-TARGET_NAME = main
-SRC = $(SRC_DIR)/$(TARGET_NAME).cpp
-GLAD_SRC = $(SRC_DIR)/glad.c
-TARGET = $(BUILD_DIR)/$(TARGET_NAME)
-
-# Default rule to build the executable
-all: $(TARGET)
-
-$(TARGET): $(SRC)
+# Configure the project (this will invoke CMake)
+configure:
 	mkdir -p $(BUILD_DIR)
-	$(CXX) -o $(TARGET) $(SRC) $(GLAD_SRC) $(CXXFLAGS) $(LDFLAGS)
+	cd $(BUILD_DIR) && cmake ..
 
-# Run the program
-run: $(TARGET)
-	./$(TARGET)
+# Build the project (invokes make)
+build: configure
+	cd $(BUILD_DIR) && make
 
-# Clean up generated files
+# Run the built project
+run: build
+	cd $(BUILD_DIR) && ./LearnOpenGL
+
+# Clean the build files
 clean:
-	rm -f $(TARGET)
+	rm -rf $(BUILD_DIR)
+
+.PHONY: all configure build run clean
