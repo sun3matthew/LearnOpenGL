@@ -1,11 +1,13 @@
 #include <glad/glad.h> 
 #include <GLFW/glfw3.h>
-#include <shader.h>
-#include <stb_image.h>
+
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
+
+#include <shader.h>
 #include <camera.h>
+#include <texture.h>
 
 #include <iostream>
 
@@ -189,37 +191,9 @@ int main(void){
 
     glBindVertexArray(0);
 
-    int width, height, nrChannels;
-    unsigned char *data = stbi_load("resources/textures/container2.png", &width, &height, &nrChannels, 0); 
-    unsigned int texture1;
-    glGenTextures(1, &texture1);  
-    glBindTexture(GL_TEXTURE_2D, texture1);
-    // target, mipmap level, internal format, width, height, 0, format, type, data
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
-    glGenerateMipmap(GL_TEXTURE_2D);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    stbi_image_free(data);
-
-    data = stbi_load("resources/textures/container2_specular.png", &width, &height, &nrChannels, 0); 
-    unsigned int texture2;
-    glGenTextures(1, &texture2);  
-    glBindTexture(GL_TEXTURE_2D, texture2);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
-    glGenerateMipmap(GL_TEXTURE_2D);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    stbi_image_free(data);
-
-    data = stbi_load("resources/textures/matrix.jpg", &width, &height, &nrChannels, 0); 
-    unsigned int texture3;
-    glGenTextures(1, &texture3);  
-    glBindTexture(GL_TEXTURE_2D, texture3);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
-    glGenerateMipmap(GL_TEXTURE_2D);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    stbi_image_free(data);
+    Texture texture1("resources/textures/container2.png", true);
+    Texture texture2("resources/textures/container2_specular.png", true);
+    Texture texture3("resources/textures/matrix.jpg", false);
 
 
     glm::vec3 modelPos(0.0f, 0.0f, 0.0f);
@@ -251,6 +225,13 @@ int main(void){
         glm::vec3(-1.3f,  1.0f, -1.5f)
     };
 
+    glm::vec3 pointLightPositions[] = {
+        glm::vec3( 0.7f,  0.2f,  2.0f),
+        glm::vec3( 2.3f, -3.3f, -4.0f),
+        glm::vec3(-4.0f,  2.0f, -12.0f),
+        glm::vec3(-3.8f, -2.0f, -12.3f),
+    };  
+
     // Render loop
     // input -> update -> render -> swap buffers & poll events
     while(!glfwWindowShouldClose(window)){
@@ -264,17 +245,12 @@ int main(void){
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        glActiveTexture(GL_TEXTURE0); 
-        glBindTexture(GL_TEXTURE_2D, texture1);
-        glActiveTexture(GL_TEXTURE0 + 1);
-        glBindTexture(GL_TEXTURE_2D, texture2);
-        glActiveTexture(GL_TEXTURE0 + 2);
-        glBindTexture(GL_TEXTURE_2D, texture3);
-
+        texture1.bind(0);
+        texture2.bind(1);
+        texture3.bind(2);
 
         glm::mat4 view = camera.GetViewMatrix();
         glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), 800.0f / 600.0f, 0.1f, 100.0f);
-        
 
         glm::vec3 lightPosNew = lightPos + glm::vec3(0.0f, 0.0f, sin(glfwGetTime()) * 4.0f);
         glm::vec3 newLightColor = lightColor - glm::vec3(0.0f, 0.0f, fade);
@@ -282,18 +258,25 @@ int main(void){
             modelShader.use();
             modelShader.setVec3("viewPos", camera.Position.x, camera.Position.y, camera.Position.z);
 
-            modelShader.setVec3("light.position", lightPosNew.x, lightPosNew.y, lightPosNew.z);
-            modelShader.setVec3("light.ambient",  0.2f, 0.2f, 0.2f);
-            modelShader.setVec3("light.diffuse",  0.5f, 0.5f, 0.5f); // darken diffuse light a bit
-            modelShader.setVec3("light.specular", 1.0f, 1.0f, 1.0f); 
+            modelShader.setVec3("dirLight.direction", -lightPosNew.x, -lightPosNew.y, -lightPosNew.z);
+            modelShader.setVec3("dirLight.lightingData.ambient",  0.2f, 0.2f, 0.2f);
+            modelShader.setVec3("dirLight.lightingData.diffuse",  0.5f, 0.5f, 0.5f); // darken diffuse light a bit
+            modelShader.setVec3("dirLight.lightingData.specular", 1.0f, 1.0f, 1.0f); 
+
+            for(unsigned int i = 0; i < 4; i++){
+                modelShader.setVec3("pointLights[" + std::to_string(i) + "].position", pointLightPositions[i].x, pointLightPositions[i].y, pointLightPositions[i].z);
+                modelShader.setVec3("pointLights[" + std::to_string(i) + "].lightingData.ambient",  0.2f, 0.2f, 0.2f);
+                modelShader.setVec3("pointLights[" + std::to_string(i) + "].lightingData.diffuse",  0.5f, 0.5f, 0.5f); // darken diffuse light a bit
+                modelShader.setVec3("pointLights[" + std::to_string(i) + "].lightingData.specular", 1.0f, 1.0f, 1.0f); 
+                modelShader.setVec3("pointLights[" + std::to_string(i) + "].attenuation", 1.0f, 0.09f, 0.032f);
+            }
 
             modelShader.setVec3("material.specular", 0.5f, 0.5f, 0.5f);
             modelShader.setFloat("material.shininess", 32.0f);
 
-
-
             modelShader.setMat4("view", glm::value_ptr(view));
             modelShader.setMat4("projection", glm::value_ptr(projection));
+
             glm::mat4 model = glm::mat4(1.0f);
             model = glm::translate(model, cubePositions[i]);
             model = glm::rotate(model, (float)glfwGetTime() * glm::radians(50.0f), glm::vec3(1.0f, 0.3f, 0.5f));
