@@ -1,6 +1,8 @@
 #ifndef TEXTURE_H
 #define TEXTURE_H
 
+#include <string>
+
 class Texture
 {
 private:
@@ -9,7 +11,11 @@ private:
     int width, height, nrChannels;
 
 public:
-    Texture(const char* path, bool alpha = false);
+    std::string type;
+    std::string path;
+
+
+    Texture(const char* path, bool alpha, std::string typeName);
     void bind(int textureUnit);
     int getID();
     int getTextureUnit();

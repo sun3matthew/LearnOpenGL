@@ -3,7 +3,10 @@
 #include <stb_image.h>
 #include <iostream>
 
-Texture::Texture(const char* path, bool alpha){
+Texture::Texture(const char* path, bool alpha, std::string typeName){
+    type = typeName;
+    this->path = path;
+
     glGenTextures(1, &ID);  
     glBindTexture(GL_TEXTURE_2D, ID);
 
@@ -18,7 +21,7 @@ Texture::Texture(const char* path, bool alpha){
         }
         glGenerateMipmap(GL_TEXTURE_2D);
     }else{
-        std::cout << "Failed to load texture" << std::endl;
+        std::cout << "Failed to load texture " << path << std::endl;
     }
     stbi_image_free(data);
 
