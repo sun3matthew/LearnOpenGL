@@ -23,9 +23,10 @@ target_include_directories(${PROJECT_NAME} PRIVATE
 # Library directories
 target_link_directories(${PROJECT_NAME} PRIVATE /opt/homebrew/lib)
 
-add_subdirectory(external/assimp)
-target_include_directories(${PROJECT_NAME} PUBLIC external/assimp/include)
-target_link_libraries(${PROJECT_NAME} PUBLIC assimp)
+# set(ASSIMP_NO_EXPORT ON CACHE BOOL "Disable Assimp's export functionality")
+# add_subdirectory(external/assimp)
+# target_include_directories(${PROJECT_NAME} PUBLIC external/assimp/include)
+# target_link_libraries(${PROJECT_NAME} PUBLIC assimp)
 
 # Link GLFW and OpenGL libraries (using keyword syntax)
 if(APPLE)

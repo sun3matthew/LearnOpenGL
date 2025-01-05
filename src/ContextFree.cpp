@@ -55,7 +55,7 @@ std::vector<Entity> ContextFree::run(){
 
     entities.push_back(queue.front());
 
-    std::vector<int> ruleValues = {50, 1, 1};
+    std::vector<int> ruleValues = {100, 1, 1};
 
     int sum = 0;
     for(int i = 0; i < ruleValues.size(); i++){

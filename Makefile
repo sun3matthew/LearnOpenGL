@@ -5,7 +5,7 @@ BUILD_DIR = build
 BUILD_TYPE ?= Release
 
 # Default target to configure and build
-all: configure build
+all: build
 
 # Configure the project (this will invoke CMake with the build type)
 configure:
@@ -14,10 +14,16 @@ configure:
 
 # Build the project (invokes make)
 build: configure
-	cd $(BUILD_DIR) && make
+	cd $(BUILD_DIR) && make LearnOpenGL
 
 # Run the built project
 run: build
+	cd $(BUILD_DIR) && ./LearnOpenGL
+
+build-fast: configure
+	cd $(BUILD_DIR) && make LearnOpenGL/fast
+
+run-fast: build-fast
 	cd $(BUILD_DIR) && ./LearnOpenGL
 
 # Clean the build files
